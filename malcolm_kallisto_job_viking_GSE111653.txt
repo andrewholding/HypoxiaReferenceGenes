@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=GSE111653_housekeeper.job
+#SBATCH --partition=nodes
+#SBATCH --time=00-15:00:00
+#SBATCH --exclusive
+#SBATCH --account=****-****-****
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=jodie.malcolm@york.ac.uk
+#SBATCH --output=%x-%j.log
+#SBATCH --error=%x-%j.err
+
+# Abort if any command fails
+set -e
+
+# Purge any previously loaded modules
+module purge
+
+# Load modules
+module load SRA-Toolkit
+module load Trimmomatic
+module load kallisto
+module load Python
+
+# Get files from the SRA
+fastq-dump --outdir scratch/GSE111653_hk/SRA_files --split-files SRR6822831 SRR6822832 SRR6822837 SRR6822838 SRR6822841 SRR6822842 SRR6822857 SRR6822858
+
+# Add FastQC to PATH
+export PATH=$PATH:./FastQC
+
+# Quality control - Pre-trimming
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822831_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822831_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822832_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822832_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822837_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822837_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822838_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822838_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822841_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822841_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822842_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822842_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822857_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822857_2.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822858_1.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files/SRR6822858_2.fastq
+
+# Trimmomatic to tidy poor quality reads
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822831_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822831_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822832_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822832_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822837_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822837_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822838_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822838_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822841_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822841_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822842_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822842_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822857_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822857_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+java -jar /opt/apps/eb/software/Trimmomatic/0.39-Java-11/trimmomatic-0.39.jar PE -threads 8 \
+    scratch/GSE111653_hk/SRA_files/SRR6822858_1.fastq scratch/GSE111653_hk/SRA_files/SRR6822858_2.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R1_unpaired.fastq \
+    scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R2_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R2_unpaired.fastq \
+    ILLUMINACLIP:TruSeq3-PE.fa:2:30:20 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+
+# Quality control - Post-trimming
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R2_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R1_paired.fastq
+fastqc --outdir scratch/GSE111653_hk/FastQC_Reports scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R2_paired.fastq
+
+# create kallisto index
+wget https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz
+kallisto index -i kallisto_index_genome.idx GRCh38.p14.genome.fa.gz
+
+# kallisto quant
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/831 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822831_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/832 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822832_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/837 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822837_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/838 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822838_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/841 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822841_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/842 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822842_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/857 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822857_R2_paired.fastq
+kallisto quant -i kallisto_index_files/Kallisto_index_cdna.idx -o scratch/GSE111653_hk/kallisto_quant_v2/858 -b 100 --threads=8 scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R1_paired.fastq scratch/GSE111653_hk/SRA_files_trimmed/SRR6822858_R2_paired.fastq
+
